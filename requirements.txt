@@ -4,7 +4,7 @@ numpy
 setuptools
 aliyun-python-sdk-core
 alibabacloud-nls-java-sdk
-PyGObject
+
 PyQt5
 audiotsm
 scipy
