@@ -1,5 +1,5 @@
 ## 
-在原作者（https://github.com/icodebase/ivideo/tree/V2.0.10）的基础上 添加了一点小功能：
+在原作者 （https://github.com/icodebase/ivideo/tree/V2.0.10 ）的基础上 添加了一点小功能：
 - 分割视频输出单句.txt文本、只输出音频
 - venv脚本以及免编译
 ## 
