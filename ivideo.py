@@ -1731,8 +1731,17 @@ class FFmpegSplitVideoTab(QWidget):
             self.subtitleOffsetBox.setMinimum(-100)
             self.subtitleOffsetBox.setSingleStep(0.1)
 
-            self.exportClipSubtitleSwitch = QCheckBox(self.tr('同时导出分段srt字幕'))
-            self.exportClipSubtitleSwitch.setChecked(True)
+            self.exportClipSubtitlenotCheck = QRadioButton(self.tr('不导出字幕'))
+            self.exportClipSubtitlenotCheck.setChecked(False)
+            self.exportClipSubtitlenotCheck.clicked.connect(self.onExportClipSubtitlenotCheckClicked)
+            self.exportClipSubtitleSwitch = QRadioButton(self.tr('导出分段srt字幕'))
+            self.exportClipSubtitleSwitch.setChecked(False)
+            self.exportClipSubtitleSwitch.clicked.connect(self.onExportClipSubtitleSwitchClicked)
+            self.exportClipSubtitle2txt = QRadioButton(self.tr('导出单句txt字幕'))
+            self.exportClipSubtitle2txt.setChecked(True)
+            self.exportClipSubtitle2txt.clicked.connect(self.onExportClipSubtitle2txtClicked)
+
+
 
             self.subtitleNumberPerClipHint = QLabel(self.tr('每多少句剪为一段：'))
             self.subtitleNumberPerClipHint.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
@@ -1740,6 +1749,10 @@ class FFmpegSplitVideoTab(QWidget):
             self.subtitleNumberPerClipBox.setValue(1)
             self.subtitleNumberPerClipBox.setAlignment(Qt.AlignCenter)
             self.subtitleNumberPerClipBox.setMinimum(1)
+            self.subtitleNumberPerClipBox.hide()
+            self.subtitleNumberPerClipHint.hide()
+            self.exportWAV= QCheckBox(self.tr('输出为WAV音频'))
+
 
             self.subtitleSplitButton = QPushButton(self.tr('运行'))
             self.subtitleSplitButton.clicked.connect(self.onSubtitleSplitRunButtonClicked)
@@ -1773,19 +1786,26 @@ class FFmpegSplitVideoTab(QWidget):
             self.subtitleSplitVideoStartEndTimeWidget.setContentsMargins(0, 0, 0, 0)
 
             self.subtitleSplitVideoCentenceOptionWidgetLayout = QHBoxLayout()  # 指定时间段
+            self.subtitleSplitVideoCentenceOptionWidgetLayout.addWidget(self.exportClipSubtitlenotCheck, 1)
             self.subtitleSplitVideoCentenceOptionWidgetLayout.addWidget(self.exportClipSubtitleSwitch, 1)
+
+            self.subtitleSplitVideoCentenceOptionWidgetLayout.addWidget(self.exportClipSubtitle2txt, 1)
+
+
             self.subtitleSplitVideoCentenceOptionWidgetLayout.addWidget(self.subtitleNumberPerClipHint, 1)
             self.subtitleSplitVideoCentenceOptionWidgetLayout.addWidget(self.subtitleNumberPerClipBox, 1)
             self.subtitleSplitVideoCentenceOptionWidgetLayout.setContentsMargins(0, 0, 0, 0)
             self.subtitleSplitVideoCentenceOptionWidget = QWidget()
             self.subtitleSplitVideoCentenceOptionWidget.setLayout(self.subtitleSplitVideoCentenceOptionWidgetLayout)
             self.subtitleSplitVideoCentenceOptionWidget.setContentsMargins(0, 0, 0, 0)
+            self.subtitleSplitVideoCentenceOptionWidgetLayout.addWidget(self.exportWAV, 1)
 
             self.subtitleSplitVdeoFormLayout = QFormLayout()
             self.subtitleSplitVdeoFormLayout.addRow(self.subtitleSplitInputHint, self.subtitleSplitVideoInputWidget) # 输入文件
             self.subtitleSplitVdeoFormLayout.addRow(self.subtitleHint, self.subtitleSplitVideoSubtitleFileWidget) # 输入字幕
             self.subtitleSplitVdeoFormLayout.addRow(self.outputHint, self.subtitleSplitOutputBox) # 输出文件
             self.subtitleSplitVdeoFormLayout.addRow(self.subtitleSplitSwitch, self.subtitleSplitVideoStartEndTimeWidget) # 起始和终止时间
+
             self.subtitleSplitVdeoFormLayout.addRow(self.subtitleOffsetHint, self.subtitleOffsetBox) # 起始和终止时间
             self.subtitleSplitVdeoFormLayout.setWidget(5, QFormLayout.SpanningRole, self.subtitleSplitVideoCentenceOptionWidget) # 多少句为一段
 
@@ -1983,6 +2003,31 @@ class FFmpegSplitVideoTab(QWidget):
             self.subtitleSplitEndTimeHint.hide()
             self.subtitleSplitEndTimeBox.hide()
 
+    def onExportClipSubtitleSwitchClicked(self):
+        if self.exportClipSubtitleSwitch.isChecked():
+            self.subtitleNumberPerClipBox.show()
+            self.subtitleNumberPerClipHint.show()
+            self.subtitleNumberPerClipBox.setMaximum(9999999)
+        else:
+            self.subtitleNumberPerClipBox.hide()
+    def onExportClipSubtitlenotCheckClicked(self):
+        if self.exportClipSubtitlenotCheck.isChecked():   
+            self.subtitleNumberPerClipBox.hide()
+            self.subtitleNumberPerClipHint.hide()
+            self.subtitleNumberPerClipBox.setValue(1)
+            self.subtitleNumberPerClipBox.setMaximum(1)
+        else:
+            self.subtitleNumberPerClipBox.hide()
+
+    def onExportClipSubtitle2txtClicked(self):
+        if self.exportClipSubtitle2txt.isChecked():
+            self.subtitleNumberPerClipBox.hide()
+            self.subtitleNumberPerClipHint.hide()
+            self.subtitleNumberPerClipBox.setValue(1)
+            self.subtitleNumberPerClipBox.setMaximum(1)
+        else:
+            self.subtitleNumberPerClipBox.show()
+
     def onDurationSplitSwitchClicked(self):
         if self.durationSplitVideoCutHint.isChecked():
             self.durationSplitVideoInputSeekStartHint.show()
@@ -2086,6 +2131,8 @@ class FFmpegSplitVideoTab(QWidget):
             thread.subtitleOffset = subtitleOffset
 
             thread.exportClipSubtitle = self.exportClipSubtitleSwitch.isChecked()
+            thread.exportClipSubtitle2txt = self.exportClipSubtitle2txt.isChecked()
+            thread.exportWAV=self.exportWAV.isChecked()
             thread.subtitleNumberPerClip = self.subtitleNumberPerClipBox.value()
 
             thread.output = output
@@ -5080,6 +5127,7 @@ class SubtitleSplitVideoThread(QThread):
     subtitleOffset = None
 
     exportClipSubtitle = None
+    exportClipSubtitle2txt = None
 
     clipOutputOption = ''
     subtitleNumberPerClip = 1
@@ -5103,7 +5151,13 @@ class SubtitleSplitVideoThread(QThread):
         subtitleSplit = os.path.splitext(self.subtitleFile)
         subtitleName = subtitleSplit[0]
         subtitleExt = subtitleSplit[1]
-        inputFileExt = os.path.splitext(self.inputFile)[1]
+        print(self.exportWAV)
+        if self.exportWAV ==True:
+            inputFileExt = ".wav"
+        else:
+            inputFileExt = os.path.splitext(self.inputFile)[1]
+        
+        print(inputFileExt)
         # clipOutputOption = ''
 
         if self.cutSwitchValue != 0:
@@ -5230,7 +5284,8 @@ class SubtitleSplitVideoThread(QThread):
                         continue
             index = format(srtList[i].index, '0>6d')
             command = 'ffmpeg -y -ss %s -to %s -i "%s" %s "%s"' % (
-            start, end, self.inputFile, self.ffmpegOutputOption, self.outputFolder + index + '.' + inputFileExt)
+            start, end, self.inputFile, self.ffmpegOutputOption, self.outputFolder + index + '' + inputFileExt) # 设定输出文件格式
+
             if platfm == 'Windows':
                 self.process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                                                 universal_newlines=True, encoding='utf-8',
@@ -5265,6 +5320,29 @@ class SubtitleSplitVideoThread(QThread):
                     srtFile.write(srtSub)
                 pass
 
+            if self.exportClipSubtitle2txt != 0:
+                subtitles = []
+                for j in range(0, self.subtitleNumberPerClip, 1):
+                    startTime = (srtList[i + j].start.seconds + srtList[i + j].start.microseconds / 1000000) - (
+                                srtList[i].start.seconds + srtList[i].start.microseconds / 1000000)
+                    startSeconds = int(startTime)
+                    startMicroseconds = startTime * 1000 % 1000 * 1000
+                    duration = (srtList[i + j].end.seconds + srtList[i + j].end.microseconds / 1000000) - (
+                                srtList[i + j].start.seconds + srtList[i + j].start.microseconds / 1000000)
+                    endTime = startTime + duration
+                    endSeconds = int(endTime)
+                    endMicroseconds = endTime * 1000 % 1000 * 1000
+                    startTime = datetime.timedelta(seconds=startSeconds, microseconds=startMicroseconds)
+                    endTime = datetime.timedelta(seconds=endSeconds, microseconds=endMicroseconds)
+                    subContent = srtList[i + j].content
+
+                    subtitle = srt.Subtitle(index=j + 1, start=startTime, end=endTime, content=subContent)
+                    subtitles.append(subtitle)
+                srtSub = subContent
+                srtPath = self.outputFolder + index + '.txt'
+                with open(srtPath, 'w+') as srtFile:
+                    srtFile.write(srtSub)
+                pass
         self.print(self.tr('导出完成\n'))
 
         # self.print(os.path.splitext(self.subtitleFile)[1])
